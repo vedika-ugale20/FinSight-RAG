@@ -1,59 +1,90 @@
-# FinSight RAG 📊
+# FinSight RAG
+### Enterprise Financial Document Intelligence & Retrieval-Augmented Generation Assistant
 
-## Enterprise Financial Document Intelligence & RAG Assistant
+FinSight RAG is an enterprise financial document question-answering system that uses Retrieval-Augmented Generation (RAG) to answer questions from Microsoft's 2023, 2024, and 2025 annual reports.
 
-FinSight is a Retrieval-Augmented Generation (RAG) system designed to answer financial questions using Microsoft's 2023–2025 annual reports.
+The system retrieves relevant evidence from the financial documents before generating an answer, helping reduce unsupported responses and improving source transparency.
 
-### 🚀 Features
+---
 
-- Semantic document retrieval
-- FAISS vector database
-- 384-dimensional Sentence Transformer embeddings
-- Metadata-aware document chunks
+## 📌 Project Overview
+
+Financial annual reports contain large amounts of structured and unstructured information. Finding specific financial information manually can be time-consuming, especially when comparing multiple fiscal years.
+
+FinSight RAG addresses this problem by allowing users to ask natural-language questions about Microsoft's annual reports and receive answers supported by retrieved document evidence.
+
+The system combines:
+
+- Document processing
+- Metadata-aware text chunking
+- Sentence Transformer embeddings
+- FAISS vector similarity search
+- Evidence-based retrieval
+- FLAN-T5 grounded generation
 - Fiscal-year filtering
-- Grounded financial answers
-- Source attribution and evidence display
-- Hallucination control
-- Streamlit interactive dashboard
-- FLAN-T5 based grounded generation
+- Source attribution
+- Insufficient-evidence handling
+- Interactive Streamlit dashboard
 
-### 🧠 Technology Stack
+---
 
-- Python
-- Streamlit
-- Sentence Transformers
-- FAISS
-- Hugging Face Transformers
-- FLAN-T5
-- NumPy
-- Pandas
+## 🎯 Objectives
 
-### 📄 Documents
+The main objectives of FinSight RAG are:
 
-The system uses Microsoft annual reports for:
+1. Build a financial document question-answering system using RAG.
+2. Process Microsoft's annual reports from multiple fiscal years.
+3. Retrieve relevant financial information using semantic similarity.
+4. Generate answers using retrieved document evidence.
+5. Provide source attribution for retrieved information.
+6. Support fiscal-year based document filtering.
+7. Reduce hallucinated or unsupported answers.
+8. Provide an interactive interface through Streamlit.
 
-- FY2023
-- FY2024
-- FY2025
+---
 
-### 🔄 RAG Pipeline
+## 📄 Documents Used
 
-Documents → Text Extraction → Chunking → Embeddings → FAISS Retrieval → Evidence Verification → Grounded Answer
+The system uses Microsoft's annual reports for:
 
-### 💡 Example Questions
+| Fiscal Year | Document |
+|-------------|----------|
+| 2023 | Microsoft 2023 Annual Report |
+| 2024 | Microsoft 2024 Annual Report |
+| 2025 | Microsoft 2025 Annual Report |
 
-- What was Microsoft's revenue in fiscal year 2024?
-- What was Microsoft's net income in 2025?
-- How did Microsoft's revenue change from 2023 to 2025?
-- What was Microsoft's operating income in 2024?
+The documents are processed into smaller text chunks and enriched with metadata such as document name and fiscal year.
 
-### 📊 Project Statistics
+---
 
-- 3 annual reports
-- 246 metadata-aware chunks
-- 384-dimensional embeddings
-- FAISS similarity search
+## 🏗️ System Architecture
 
-### ⚠️ Scope
-
-FinSight answers questions only from the provided Microsoft annual reports. It does not use external financial information.
+```text
+Microsoft Annual Reports
+          ↓
+Document Extraction
+          ↓
+Text Cleaning
+          ↓
+Metadata-Aware Chunking
+          ↓
+Sentence Transformer
+(All-MiniLM-L6-v2)
+          ↓
+Normalized Embeddings
+          ↓
+FAISS Vector Index
+          ↓
+Semantic Retrieval
+          ↓
+Fiscal-Year Filtering
+          ↓
+Evidence Verification
+          ↓
+FLAN-T5 Generation
+          ↓
+Grounded Answer
+          ↓
+Source Attribution
+          ↓
+Streamlit Dashboard
