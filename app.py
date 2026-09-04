@@ -1,11 +1,9 @@
-
 import streamlit as st
 import pickle
 import faiss
 import numpy as np
 import re
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
@@ -123,7 +121,7 @@ def load_resources():
 document_chunks, index, embedding_model, tokenizer, llm = load_resources()
 
 
-def retrieve_documents(query, top_k=5):
+def retrieve_documents(query, top_k=15):
 
     query_embedding = embedding_model.encode(
         [query],
@@ -160,11 +158,13 @@ def retrieve_documents(query, top_k=5):
     return results
 
 
-
 def generate_grounded_answer(query, sources):
 
     if not sources:
-        return "The provided documents do not contain sufficient evidence to answer this question."
+        return (
+            "The provided documents do not contain sufficient "
+            "evidence to answer this question."
+        )
 
     context = "\n\n".join(
         f"Document: {source['document']}\n"
@@ -183,7 +183,8 @@ The provided documents do not contain sufficient evidence to answer this questio
 
 Do not invent facts.
 Do not use outside knowledge.
-Do not confuse Microsoft Cloud revenue, segment revenue, or product revenue with total company revenue.
+Do not confuse Microsoft Cloud revenue, segment revenue, product revenue,
+net income, operating income, or total company revenue.
 
 Question:
 {query}
@@ -218,7 +219,12 @@ Answer:
 
 def safe_financial_answer(query):
 
-    # Reject questions about companies outside the Microsoft reports
+    query_lower = query.lower()
+
+    # -----------------------------------------
+    # OUT-OF-SCOPE COMPANY CHECK
+    # -----------------------------------------
+
     external_companies = [
         "tesla",
         "apple",
@@ -232,99 +238,101 @@ def safe_financial_answer(query):
         "netflix"
     ]
 
-    query_lower = query.lower()
+    if any(
+        company in query_lower
+        for company in external_companies
+    ):
 
-    if any(company in query_lower for company in external_companies):
         return {
             "status": "INSUFFICIENT_EVIDENCE",
-            "answer": "The provided documents do not contain sufficient evidence to answer this question.",
+            "answer": (
+                "The provided documents do not contain sufficient "
+                "evidence to answer this question."
+            ),
             "sources": []
         }
 
+    # -----------------------------------------
+    # REQUIRE MICROSOFT
+    # -----------------------------------------
+
+    microsoft_terms = [
+        "microsoft",
+        "msft",
+        "microsoft corporation"
+    ]
+
+    if not any(
+        term in query_lower
+        for term in microsoft_terms
+    ):
+
+        return {
+            "status": "INSUFFICIENT_EVIDENCE",
+            "answer": (
+                "The provided documents contain Microsoft annual "
+                "reports only. Please ask a question about Microsoft."
+            ),
+            "sources": []
+        }
+
+    # -----------------------------------------
+    # YEAR CHECK
+    # -----------------------------------------
 
     year_match = re.search(
-        r'\b(20\d{2})\b',
+        r"\b(2023|2024|2025)\b",
         query
     )
 
-    target_year = int(year_match.group(1)) if year_match else None
-
-    if target_year not in [2023, 2024, 2025]:
+    if not year_match:
 
         return {
             "status": "INSUFFICIENT_EVIDENCE",
-            "answer": "The provided documents do not contain sufficient evidence to answer this question.",
+            "answer": (
+                "Please specify a fiscal year between 2023 and 2025."
+            ),
             "sources": []
         }
 
-    candidates = []
+    target_year = int(year_match.group(1))
 
-    for chunk in document_chunks:
+    # -----------------------------------------
+    # RETRIEVE ONLY THE REQUESTED YEAR
+    # -----------------------------------------
 
-        if chunk["year"] != target_year:
-            continue
+    candidates = retrieve_documents(
+        query,
+        top_k=15
+    )
 
-        text = chunk["text"]
-
-        if target_year == 2023:
-
-            if "$211" in text and "billion in revenue" in text:
-
-                candidates.append({
-                    "text": text,
-                    "document": chunk["document"],
-                    "year": chunk["year"]
-                })
-
-        elif target_year == 2024:
-
-            if "$245" in text and "annual revenue" in text:
-
-                candidates.append({
-                    "text": text,
-                    "document": chunk["document"],
-                    "year": chunk["year"]
-                })
-
-        elif target_year == 2025:
-
-            if "$281.7" in text:
-
-                candidates.append({
-                    "text": text,
-                    "document": chunk["document"],
-                    "year": chunk["year"]
-                })
-
+    candidates = [
+        source
+        for source in candidates
+        if source["year"] == target_year
+    ]
 
     if not candidates:
 
         return {
             "status": "INSUFFICIENT_EVIDENCE",
-            "answer": "The provided documents do not contain sufficient evidence to answer this question.",
+            "answer": (
+                "The provided documents do not contain sufficient "
+                "evidence to answer this question."
+            ),
             "sources": []
         }
 
-
-    if target_year == 2023:
-
-        answer = "$211 billion."
-
-    elif target_year == 2024:
-
-        answer = "Over $245 billion."
-
-    else:
-
-        answer = "$281.7 billion."
-
-
     return {
-        "status": "GROUNDED",
-        "answer": answer,
-        "sources": candidates[:3]
+        "status": "RETRIEVED",
+        "answer": None,
+        "sources": candidates
     }
 
+
+# -----------------------------------------
+# SIDEBAR
+# -----------------------------------------
 
 with st.sidebar:
 
@@ -337,21 +345,19 @@ with st.sidebar:
         "Enterprise Financial Intelligence"
     )
 
-    
-
     st.markdown("### 📚 Document Collection")
+
     st.markdown("📄 Microsoft 2023 Annual Report")
     st.markdown("📄 Microsoft 2024 Annual Report")
     st.markdown("📄 Microsoft 2025 Annual Report")
+
     st.markdown("### 📅 Year Filter")
 
-selected_year = st.radio(
-    "Select fiscal year",
-    ["All Years", 2023, 2024, 2025],
-    index=0
-)
-
-st.markdown("---")
+    selected_year = st.radio(
+        "Select fiscal year",
+        ["All Years", 2023, 2024, 2025],
+        index=0
+    )
 
     st.markdown("---")
 
@@ -368,13 +374,19 @@ st.markdown("---")
     st.caption("FinSight RAG")
 
 
+# -----------------------------------------
+# MAIN HEADER
+# -----------------------------------------
+
 st.markdown(
     '<div class="main-title">FinSight RAG 📊</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="subtitle">Enterprise Financial Document Intelligence & Question Answering</div>',
+    '<div class="subtitle">'
+    'Enterprise Financial Document Intelligence & Question Answering'
+    '</div>',
     unsafe_allow_html=True
 )
 
@@ -433,38 +445,99 @@ with col3:
     """, unsafe_allow_html=True)
 
 
-st.markdown("### 💬 Ask FinSight")
+# -----------------------------------------
+# QUESTION INPUT
+# -----------------------------------------
 
+st.markdown("### 💬 Ask FinSight")
 
 query = st.text_input(
     "Your question",
-    placeholder="Example: What was Microsoft's total company revenue in fiscal year 2024?",
+    placeholder=(
+        "Example: What was Microsoft's total company "
+        "revenue in fiscal year 2024?"
+    ),
     label_visibility="collapsed"
 )
 
 
 if st.button("Ask FinSight 🚀") and query:
 
-    is_revenue_question = (
-        "revenue" in query.lower()
-        and "microsoft" in query.lower()
-    )
+    query_lower = query.lower()
 
+    # -----------------------------------------
+    # COMPANY SCOPE CHECK
+    # -----------------------------------------
 
-    if is_revenue_question:
+    external_companies = [
+        "tesla",
+        "apple",
+        "amazon",
+        "google",
+        "alphabet",
+        "meta",
+        "nvidia",
+        "ibm",
+        "oracle",
+        "netflix"
+    ]
 
-        with st.spinner("🔍 Verifying financial evidence..."):
+    if any(
+        company in query_lower
+        for company in external_companies
+    ):
 
-            result = safe_financial_answer(query)
+        answer = (
+            "The provided documents do not contain sufficient "
+            "evidence to answer this question."
+        )
 
-        answer = result["answer"]
-        status = result["status"]
-        sources = result["sources"]
+        status = "INSUFFICIENT_EVIDENCE"
+        sources = []
 
+    elif "microsoft" not in query_lower:
+
+        answer = (
+            "The provided documents contain Microsoft annual "
+            "reports only. Please ask a question about Microsoft."
+        )
+
+        status = "INSUFFICIENT_EVIDENCE"
+        sources = []
 
     else:
 
-        with st.spinner("🔎 Searching financial documents..."):
+        # -----------------------------------------
+        # YEAR FILTER
+        # -----------------------------------------
+
+        year_match = re.search(
+            r"\b(2023|2024|2025)\b",
+            query
+        )
+
+        if selected_year != "All Years":
+
+            target_year = selected_year
+
+        elif year_match:
+
+            target_year = int(
+                year_match.group(1)
+            )
+
+        else:
+
+            target_year = None
+
+
+        # -----------------------------------------
+        # RETRIEVAL
+        # -----------------------------------------
+
+        with st.spinner(
+            "🔍 Searching financial documents..."
+        ):
 
             sources = retrieve_documents(
                 query,
@@ -472,27 +545,65 @@ if st.button("Ask FinSight 🚀") and query:
             )
 
 
-            answer = generate_grounded_answer(
-                query,
-                sources
+        # -----------------------------------------
+        # APPLY YEAR FILTER
+        # -----------------------------------------
+
+        if target_year is not None:
+
+            sources = [
+                source
+                for source in sources
+                if source["year"] == target_year
+            ]
+
+
+        # -----------------------------------------
+        # CHECK EVIDENCE
+        # -----------------------------------------
+
+        if not sources:
+
+            answer = (
+                "The selected fiscal year does not contain "
+                "sufficient evidence to answer this question."
             )
+
+            status = "INSUFFICIENT_EVIDENCE"
+
+        else:
+
+            # -----------------------------------------
+            # GENERATE GROUNDED ANSWER
+            # -----------------------------------------
+
+            with st.spinner(
+                "🤖 Generating grounded answer..."
+            ):
+
+                answer = generate_grounded_answer(
+                    query,
+                    sources
+                )
+
 
             if (
                 not answer
-                or "do not contain sufficient evidence" in answer.lower()
+                or
+                "do not contain sufficient evidence"
+                in answer.lower()
             ):
+
                 status = "INSUFFICIENT_EVIDENCE"
 
-            answer = generate_grounded_answer(
-                query,
-                sources
-            )
-
-            if not answer or "do not contain sufficient evidence" in answer.lower():
-                status = "INSUFFICIENT_EVIDENCE"
             else:
+
                 status = "GROUNDED"
 
+
+    # -----------------------------------------
+    # DISPLAY ANSWER
+    # -----------------------------------------
 
     st.markdown("### ✨ Answer")
 
@@ -520,6 +631,10 @@ if st.button("Ask FinSight 🚀") and query:
             "⚠️ " + answer
         )
 
+
+    # -----------------------------------------
+    # DISPLAY SOURCES
+    # -----------------------------------------
 
     st.markdown("### 📌 Supporting Sources")
 
@@ -560,5 +675,6 @@ if st.button("Ask FinSight 🚀") and query:
     else:
 
         st.info(
-            "No supporting evidence was found in the provided documents."
+            "No supporting evidence was found in the "
+            "provided documents."
         )
