@@ -343,6 +343,15 @@ with st.sidebar:
     st.markdown("📄 Microsoft 2023 Annual Report")
     st.markdown("📄 Microsoft 2024 Annual Report")
     st.markdown("📄 Microsoft 2025 Annual Report")
+    st.markdown("### 📅 Year Filter")
+
+selected_year = st.radio(
+    "Select fiscal year",
+    ["All Years", 2023, 2024, 2025],
+    index=0
+)
+
+st.markdown("---")
 
     st.markdown("---")
 
