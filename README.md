@@ -1,5 +1,5 @@
 # FinSight RAG
-### Enterprise Financial Document Intelligence & Retrieval-Augmented Generation Assistant
+# Enterprise Financial Document Intelligence & Retrieval-Augmented Generation Assistant
 
 FinSight RAG is an enterprise financial document question-answering system that uses Retrieval-Augmented Generation (RAG) to answer questions from Microsoft's 2023, 2024, and 2025 annual reports.
 
@@ -7,7 +7,7 @@ The system retrieves relevant evidence from the financial documents before gener
 
 ---
 
-## 📌 Project Overview
+##  Project Overview
 
 Financial annual reports contain large amounts of structured and unstructured information. Finding specific financial information manually can be time-consuming, especially when comparing multiple fiscal years.
 
@@ -28,7 +28,7 @@ The system combines:
 
 ---
 
-## 🎯 Objectives
+# Objectives
 
 The main objectives of FinSight RAG are:
 
@@ -42,8 +42,7 @@ The main objectives of FinSight RAG are:
 8. Provide an interactive interface through Streamlit.
 
 ---
-
-## 📄 Documents Used
+ # Documents Used
 
 The system uses Microsoft's annual reports for:
 
@@ -57,7 +56,7 @@ The documents are processed into smaller text chunks and enriched with metadata 
 
 ---
 
-## 🏗️ System Architecture
+# System Architecture
 
 ```text
 Microsoft Annual Reports
