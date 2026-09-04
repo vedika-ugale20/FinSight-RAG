@@ -101,11 +101,11 @@ div.stButton > button {
 @st.cache_resource
 def load_resources():
 
-    with open("vectorstore/document_chunks.pkl", "rb") as f:
+    with open("document_chunks.pkl", "rb") as f:
         chunks = pickle.load(f)
 
     index = faiss.read_index(
-        "vectorstore/financial_index.faiss"
+        "financial_index.faiss"
     )
 
     model = SentenceTransformer(
