@@ -337,7 +337,7 @@ with st.sidebar:
         "Enterprise Financial Intelligence"
     )
 
-    st.markdown("---")
+    
 
     st.markdown("### 📚 Document Collection")
     st.markdown("📄 Microsoft 2023 Annual Report")
