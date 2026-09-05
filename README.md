@@ -87,3 +87,28 @@ Grounded Answer
 Source Attribution
           ↓
 Streamlit Dashboard
+# Architecture
+
+The FinSight RAG system follows an end-to-end Retrieval-Augmented Generation pipeline:
+
+**Microsoft Annual Reports → Document Extraction → Metadata-Aware Chunking → Sentence Transformer Embeddings → FAISS Vector Search → Semantic Retrieval → Evidence Verification → FLAN-T5 Generation → Grounded Answer + Source Attribution**
+
+[View the System Architecture](FinSight_RAG_Architecture_WordStyle.pdf)
+
+# Screenshots
+
+The repository contains screenshots of the deployed FinSight RAG application, including the dashboard, grounded answers, and fiscal-year filtering.
+
+[View Application Screenshots](screenshots/)
+
+#Project Report
+
+[View / Download the Project Report](FinSight_RAG_Project_Report_Final.pdf)
+
+# Live Deployment
+
+[Open FinSight RAG on Streamlit](https://vedika-ugale20-finsight-rag-app-4paiye.streamlit.app)
+
+# Conclusion
+
+FinSight RAG demonstrates an end-to-end financial document question-answering system that combines semantic retrieval, metadata-aware filtering, evidence verification, and grounded language-model generation. The system is designed to provide answers that remain tied to the supplied Microsoft annual reports rather than relying on unsupported external information.
